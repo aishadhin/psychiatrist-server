@@ -36,20 +36,20 @@ async function run() {
             return res.send({ success: true, result });
         })
 
-        app.get('/available', async (req, res) => {
-            const date = req.query.date || 'Sep 14, 2022';
+        app.get('/available', async(req, res) => {
+            const date = req.query.date || "Sep 14, 2022";
             const services = await serviceCollection.find().toArray();
-            const query = { date: date };
-            const bookings = await bookingCollection.find(query).toArray();
-            console.log(bookings)
-            services.forEach(service => {
-                const serviceBookings = bookings.filter(book => book.treatment === service.name);
-                const bookedSlots = serviceBookings.map(book => book.slot);
-                const available = service.slots.filter(slot => !bookedSlots.includes(slot));
-                services.slots = available;
-            });
+            const query = {date: date};
+            const bookings = await bookingCollection.find(query).toArray()
 
-            res.send(services);
+            services.forEach(service => {
+                const serviceBookings = bookings.filter(b=> b.treatment === service.name);
+                const booked = serviceBookings.map(s => s.slot);
+                const available = service.slots.filter(s => !booked.includes(s))
+                service.available = available;
+            })
+
+            res.send(services)
         })
 
 
