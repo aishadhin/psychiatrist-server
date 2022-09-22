@@ -38,6 +38,7 @@ async function run() {
         const serviceCollection = client.db('psychiatrist').collection('services');
         const bookingCollection = client.db('psychiatrist').collection('bookings');
         const userCollection = client.db('psychiatrist').collection('users');
+        const paymentCollection = client.db('psychiatrist').collection('payments');
 
         app.get('/services', async (req, res) => {
             const query = {};
@@ -97,6 +98,23 @@ async function run() {
         })
 
 
+        app.patch('/booking/:id', verifyJWT, async(req, res) =>{
+            const id  = req.params.id;
+            const payment = req.body;
+            const filter = {_id: ObjectId(id)};
+            const updatedDoc = {
+              $set: {
+                paid: true,
+                transactionId: payment.transactionId
+              }
+            }
+      
+            const result = await paymentCollection.insertOne(payment);
+            const updatedBooking = await bookingCollection.updateOne(filter, updatedDoc);
+            res.send(updatedBooking);
+          })
+
+
         app.post('/bookings', async (req, res) => {
             const booking = req.body;
             const query = { treatment: booking.treatment, date: booking.date, patient: booking.patient }
@@ -148,7 +166,7 @@ async function run() {
             res.send({ clientSecret: paymentIntent.client_secret })
         });
 
-        
+
     }
     finally {
 
