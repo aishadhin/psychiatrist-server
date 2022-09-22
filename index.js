@@ -1,9 +1,10 @@
 const express = require('express')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+require('dotenv').config();
 const cors = require('cors');
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY)
 const app = express();
 const jwt = require('jsonwebtoken');
-require('dotenv').config();
 const port = process.env.PORT || 5000;
 
 
@@ -123,10 +124,6 @@ async function run() {
             res.send(services)
         })
 
-
-
-
-
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
             const user = req.body;
@@ -139,9 +136,19 @@ async function run() {
             const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
             res.send({ result, token })
         })
+        app.post('/create-payment-intent', verifyJWT, async (req, res) => {
+            const service = req.body;
+            const price = service.price;
+            const amount = price * 100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
+            });
+            res.send({ clientSecret: paymentIntent.client_secret })
+        });
 
-
-
+        
     }
     finally {
 
